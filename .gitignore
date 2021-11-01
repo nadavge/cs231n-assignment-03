@@ -1,0 +1,6 @@
+.ipynb_checkpoints
+__pycache__
+cs231n/datasets/
+cs231n/build/
+cs231n/im2col_cython.c
+cs231n/im2col_cython.cpython-37m-x86_64-linux-gnu.so
