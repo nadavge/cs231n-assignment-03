@@ -48,7 +48,7 @@ def affine_backward(dout, cache):
     return dx, dw, db
 
 
-def rnn_step_forward(x, prev_h, Wx, Wh, b):
+def rnn_step_forward(x: np.ndarray, prev_h: np.ndarray, Wx: np.ndarray, Wh: np.ndarray, b: np.ndarray):
     """Run the forward pass for a single timestep of a vanilla RNN using a tanh activation function.
 
     The input data has dimension D, the hidden state has dimension H,
@@ -73,7 +73,11 @@ def rnn_step_forward(x, prev_h, Wx, Wh, b):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    Whprev, whprev_cache = affine_forward(prev_h, Wh, np.zeros_like(b))
+    Wxx, wxx_cache = affine_forward(x, Wx, b)
+    next_h = np.tanh(Whprev + Wxx)
+
+    cache = (whprev_cache, wxx_cache, next_h)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
@@ -104,8 +108,10 @@ def rnn_step_backward(dnext_h, cache):
     # of the output value from tanh.                                             #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
+    (whprev_cache, wxx_cache, next_h) = cache
+    dtanh = dnext_h*(1-np.power(next_h, 2))
+    dprev_h, dWh, _ = affine_backward(dtanh, whprev_cache)
+    dx, dWx, db = affine_backward(dtanh, wxx_cache)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
