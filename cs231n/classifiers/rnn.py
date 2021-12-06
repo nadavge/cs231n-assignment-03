@@ -250,6 +250,7 @@ class CaptioningRNN:
             prev_word_embedding, _ = word_embedding_forward(captions[:, t], W_embed)
             h[t], _ = rnn_step_forward(prev_word_embedding, prev_h, Wx, Wh, b)
             curr_words, _ = affine_forward(h[t], W_vocab, b_vocab)
+            print("Curr words:", curr_words.shape)
             curr_words = np.argmax(curr_words, 1)
 
             captions[:, t+1] = curr_words
