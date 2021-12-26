@@ -128,7 +128,7 @@ class MultiHeadAttention(nn.Module):
 
         # The dividing factor for containing the values of the multiplications
         self._scaler = math.sqrt(embed_dim / num_heads)
-        self._dropout_rate = dropout
+        self._dropout = nn.Dropout(p=dropout)
         self._H = num_heads
         self._softmax = nn.Softmax(dim=-1)
 
@@ -190,22 +190,28 @@ class MultiHeadAttention(nn.Module):
         v = v.view(N, T, self._H, D//self._H)
 
         k = k.transpose(1,2)
+        # k: N, H, T, d_k
         q = q.transpose(1,2)
+        # q: N, H, S, d_k
         v = v.transpose(1,2)
-        print("v size:", v.size())
-        # v: N, H, T, Dk
+        # v: N, H, T, d_k
 
         scores = torch.matmul(q, k.transpose(-2, -1)) / self._scaler
         # scores: N, H, S, T
         print("Scores size:", scores.size())
         if attn_mask is not None:
-            scores.masked_fill(attn_mask.t()==0, -math.inf)
+            scores = scores.masked_fill(attn_mask==0, -math.inf)
 
         scores = self._softmax(scores)
-        output = torch.matmul(scores, v)
+        scores = self._dropout(scores)
+
+        scores = torch.matmul(scores, v)
         # N, H, S, Dk
-        output.transpose(1, 2)
-        output = output.view(N, S, D)
+        concat = scores.transpose(1, 2).reshape(N, S, D)
+
+        # Linear projection layer
+        output = self.proj(concat)
+
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
