@@ -126,14 +126,18 @@ class MultiHeadAttention(nn.Module):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        # The dividing factor for containing the values of the multiplications
+        self._scaler = math.sqrt(embed_dim / num_heads)
+        self._dropout_rate = dropout
+        self._H = num_heads
+        self._softmax = nn.Softmax(dim=-1)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
 
-    def forward(self, query, key, value, attn_mask=None):
+    def forward(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, attn_mask=None):
         """
         Calculate the masked attention output for the provided data, computing
         all attention heads in parallel.
@@ -174,7 +178,34 @@ class MultiHeadAttention(nn.Module):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        # I'm using this as a hint: https://towardsdatascience.com/how-to-code-the-transformer-in-pytorch-24db27c8f9ec
+        # TODO question: why do we give only some dimensions to each head?
+
+        q = self.query(query)
+        k = self.key(key)
+        v = self.value(value)
+
+        q = q.view(N, S, self._H, D//self._H)
+        k = k.view(N, T, self._H, D//self._H)
+        v = v.view(N, T, self._H, D//self._H)
+
+        k = k.transpose(1,2)
+        q = q.transpose(1,2)
+        v = v.transpose(1,2)
+        print("v size:", v.size())
+        # v: N, H, T, Dk
+
+        scores = torch.matmul(q, k.transpose(-2, -1)) / self._scaler
+        # scores: N, H, S, T
+        print("Scores size:", scores.size())
+        if attn_mask is not None:
+            scores.masked_fill(attn_mask.t()==0, -math.inf)
+
+        scores = self._softmax(scores)
+        output = torch.matmul(scores, v)
+        # N, H, S, Dk
+        output.transpose(1, 2)
+        output = output.view(N, S, D)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
