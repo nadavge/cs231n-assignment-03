@@ -38,7 +38,13 @@ class PositionalEncoding(nn.Module):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        # Could probably optimize this with vector multiplication and then indexed sin/cosine
+        for i in range(max_len):
+            for j in range(embed_dim):
+                if j%2 == 0:
+                    pe[0, i, j] = math.sin(i*math.pow(10000, -1*(j/embed_dim)))
+                else:
+                    pe[0, i, j] = math.cos(i*math.pow(10000, (1-j)/embed_dim))
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -70,7 +76,8 @@ class PositionalEncoding(nn.Module):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        output = x + self.pe[:, 0:S, :]
+        output = self.dropout(output)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
