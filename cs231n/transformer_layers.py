@@ -205,7 +205,6 @@ class MultiHeadAttention(nn.Module):
 
         scores = torch.matmul(q, k.transpose(-2, -1)) / self._scaler
         # scores: N, H, S, T
-        print("Scores size:", scores.size())
         if attn_mask is not None:
             scores = scores.masked_fill(attn_mask==0, -math.inf)
 
