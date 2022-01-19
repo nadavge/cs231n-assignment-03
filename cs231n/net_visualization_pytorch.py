@@ -53,7 +53,7 @@ def compute_saliency_maps(X : torch.Tensor, y, model):
     ##############################################################################
     return saliency
 
-def make_fooling_image(X, target_y, model):
+def make_fooling_image(X, target_y, model: torch.nn.Module):
     """
     Generate a fooling image that is close to X, but that the model classifies
     as target_y.
@@ -68,10 +68,10 @@ def make_fooling_image(X, target_y, model):
     by the model.
     """
     # Initialize our fooling image to the input image, and make it require gradient
-    X_fooling = X.clone()
+    X_fooling : torch.Tensor = X.clone()
     X_fooling = X_fooling.requires_grad_()
 
-    learning_rate = 1
+    learning_rate = 8e-4
     ##############################################################################
     # TODO: Generate a fooling image X_fooling that the model will classify as   #
     # the class target_y. You should perform gradient ascent on the score of the #
@@ -87,7 +87,39 @@ def make_fooling_image(X, target_y, model):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # Make sure we don't train the network
+    model.eval()
+    softmax = torch.nn.Softmax(dim=1)
+    regfactor = 1e4
+    
+    eps = 1e-9 # To avoid dividing by zero
+
+    max_attempts = 200
+    for i in range(max_attempts):
+        y_pred : torch.Tensor = model(X_fooling).squeeze()
+        max_y_pred_idx = y_pred.argmax()
+
+        #y_soft : torch.Tensor = softmax(y_pred).squeeze() # size (C, )
+        #max_y_pred_idx = y_soft.argmax()
+        print(f"Iteration {i+1}/{max_attempts}, class #{target_y} score: {y_pred[target_y]:.3f}, max score is #{max_y_pred_idx}: {y_pred[max_y_pred_idx]:.3f}")
+
+        pred_loss = y_pred[target_y] - y_pred[max_y_pred_idx]
+        if max_y_pred_idx == target_y:
+            print("Win!")
+            break
+
+        model.zero_grad()
+
+        reg = torch.mean(regfactor*torch.pow(X_fooling - X, 2))
+        loss = pred_loss #+ reg
+        print(f"Predloss: {pred_loss}, Score: {y_pred[target_y]}, Reg: {reg}")
+        loss.backward()
+
+        dX = learning_rate * X_fooling.grad# / (torch.pow(X_fooling.grad, 2) + eps)
+        learning_rate *= 0.985
+        with torch.no_grad():
+            X_fooling += dX
+
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
