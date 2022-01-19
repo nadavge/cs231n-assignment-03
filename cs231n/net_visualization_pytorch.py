@@ -5,7 +5,7 @@ import numpy as np
 from .image_utils import SQUEEZENET_MEAN, SQUEEZENET_STD
 from scipy.ndimage.filters import gaussian_filter1d
 
-def compute_saliency_maps(X, y, model):
+def compute_saliency_maps(X : torch.Tensor, y, model):
     """
     Compute a class saliency map using the model for images X and labels y.
 
@@ -34,7 +34,18 @@ def compute_saliency_maps(X, y, model):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # N x C
+    y_pred : torch.Tensor = model(X)
+
+    correct_class_score = y_pred.gather(1, y.view(-1, 1)).squeeze()
+
+    model.zero_grad()
+
+    correct_class_score.sum().backward()
+
+    # Take the maximum of the gradients over the color channels
+    saliency, _ = X.grad.max(1)
+    print(saliency.size())
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
