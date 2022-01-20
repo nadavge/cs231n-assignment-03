@@ -160,7 +160,7 @@ def generator_loss(logits_fake):
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     return loss
 
-def get_optimizer(model):
+def get_optimizer(model : nn.Module):
     """
     Construct and return an Adam optimizer for the model with learning rate 1e-3,
     beta1=0.5, and beta2=0.999.
@@ -174,7 +174,11 @@ def get_optimizer(model):
     optimizer = None
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    optimizer = torch.optim.Adam(
+        model.parameters(),
+        lr = 1e-3,
+        betas=(0.5, 0.999)
+    )
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     return optimizer
@@ -280,12 +284,12 @@ def run_a_gan(D, G, D_solver, G_solver, discriminator_loss, generator_loss, load
             if len(x) != batch_size:
                 continue
             D_solver.zero_grad()
-            real_data = x.type(dtype)
+            real_data = x.type(dtype).view(-1, 784)
             logits_real = D(2* (real_data - 0.5)).type(dtype)
 
             g_fake_seed = sample_noise(batch_size, noise_size).type(dtype)
             fake_images = G(g_fake_seed).detach()
-            logits_fake = D(fake_images.view(batch_size, 1, 28, 28))
+            logits_fake = D(fake_images.view(batch_size, 784))
 
             d_total_error = discriminator_loss(logits_real, logits_fake)
             d_total_error.backward()
@@ -295,7 +299,7 @@ def run_a_gan(D, G, D_solver, G_solver, discriminator_loss, generator_loss, load
             g_fake_seed = sample_noise(batch_size, noise_size).type(dtype)
             fake_images = G(g_fake_seed)
 
-            gen_logits_fake = D(fake_images.view(batch_size, 1, 28, 28))
+            gen_logits_fake = D(fake_images.view(batch_size, 784))
             g_error = generator_loss(gen_logits_fake)
             g_error.backward()
             G_solver.step()
