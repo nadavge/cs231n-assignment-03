@@ -51,7 +51,13 @@ def discriminator(seed=None):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    model = nn.Sequential(
+        nn.Linear(784, 256),
+        nn.LeakyReLU(0.01),
+        nn.Linear(256, 256),
+        nn.LeakyReLU(0.01),
+        nn.Linear(256, 1)
+    )
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
@@ -63,7 +69,6 @@ def generator(noise_dim=NOISE_DIM, seed=None):
     """
     Build and return a PyTorch model implementing the architecture above.
     """
-
     if seed is not None:
         torch.manual_seed(seed)
 
@@ -75,8 +80,23 @@ def generator(noise_dim=NOISE_DIM, seed=None):
     # HINT: nn.Sequential might be helpful.                                      #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    """
+    * Fully connected layer from noise_dim to 1024
+    * `ReLU`
+    * Fully connected layer with size 1024 
+    * `ReLU`
+    * Fully connected layer with size 784
+    * `TanH` (to clip the image to be in the range of [-1,1])
+    """
 
-    pass
+    model = nn.Sequential(
+        nn.Linear(noise_dim, 1024),
+        nn.ReLU(),
+        nn.Linear(1024, 1024),
+        nn.ReLU(),
+        nn.Linear(1024, 784),
+        nn.Tanh()
+    )
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
@@ -117,7 +137,7 @@ def discriminator_loss(logits_real, logits_fake):
     loss = None
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    loss = bce_loss(logits_real, 1) + bce_loss(logits_fake, 0)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     return loss
@@ -135,7 +155,7 @@ def generator_loss(logits_fake):
     loss = None
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    loss = bce_loss(logits_fake, 1)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     return loss
