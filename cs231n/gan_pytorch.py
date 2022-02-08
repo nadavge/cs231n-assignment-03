@@ -220,7 +220,7 @@ def ls_generator_loss(scores_fake):
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     return loss
 
-def build_dc_classifier(batch_size):
+def build_dc_classifier(batch_size) -> nn.Module:
     """
     Build and return a PyTorch model for the DCGAN discriminator implementing
     the architecture above.
@@ -233,7 +233,44 @@ def build_dc_classifier(batch_size):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # * Reshape into image tensor (Use Unflatten!)
+    # * Conv2D: 32 Filters, 5x5, Stride 1
+    # * Leaky ReLU(alpha=0.01)
+    # * Max Pool 2x2, Stride 2
+    # * Conv2D: 64 Filters, 5x5, Stride 1
+    # * Leaky ReLU(alpha=0.01)
+    # * Max Pool 2x2, Stride 2
+    # * Flatten
+    # * Fully Connected with output size 4 x 4 x 64
+    # * Leaky ReLU(alpha=0.01)
+    # * Fully Connected with output size 1
+
+    IMAGE_WIDTH = 28
+    IMAGE_HEIGHT = 28
+    IMAGE_CHANNELS = 1
+
+    LINEAR_IN_SIZE = 64*((IMAGE_WIDTH//4)-3)**2
+
+    model = nn.Sequential(
+        Unflatten(batch_size, IMAGE_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH),
+        # This should reduce the size by 4 -> IMAGE_SIDE-4
+        nn.Conv2d(1, 32, 5, 1),
+        nn.LeakyReLU(0.01),
+        # This reduces by half -> (IMAGE_SIDE-4)/2
+        nn.MaxPool2d(2, 2),
+        # This reduces by 4 again -> ((IMAGE_SIDE-4)/2)-4
+        nn.Conv2d(32, 64, 5, 1),
+        nn.LeakyReLU(0.01),
+        # Again by half -> (((IMAGE_SIDE-4)/2)-4)/2
+        # In total the image is ((IMAGE_SIDE/2-2)-4)/2 = (IMAGE_SIDE/2-6)/2 = IMAGE_SIDE/4 - 3
+        nn.MaxPool2d(2, 2),
+        Flatten(),
+        nn.Linear(LINEAR_IN_SIZE, 1024),
+        nn.LeakyReLU(0.01),
+        nn.Linear(1024, 1)
+    )
+
+    return model
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
